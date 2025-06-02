@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quickstock_app/core/constants/routes.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
-// Agrega esta importación para RegisterPage
-import 'register_page.dart'; // Ajusta la ruta según tu estructura de carpetas
+import 'register_page.dart'; // si no usarás rutas también aquí, déjalo así
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -41,7 +41,12 @@ class _LoginPageState extends State<LoginPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Inicio de sesión exitoso")),
               );
-              // Aquí puedes navegar a la siguiente pantalla
+              // ✅ Navegación limpia usando rutas centralizadas
+              Navigator.of(context).pushReplacementNamed(
+                '/inventory',
+                arguments: state.token,  // Pasamos el token
+              );
+
             } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.error)),
@@ -67,20 +72,19 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () => _login(context),
                         child: const Text('Iniciar sesión'),
                       ),
-                const SizedBox(height: 16), // Espacio entre botones
+                const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => BlocProvider.value(
-                          value: context.read<AuthCubit>(), // reutiliza el mismo cubit
+                          value: context.read<AuthCubit>(),
                           child: const RegisterPage(),
                         ),
                       ),
                     );
                   },
-
                   child: const Text('¿No tienes cuenta? Regístrate'),
                 ),
               ],
