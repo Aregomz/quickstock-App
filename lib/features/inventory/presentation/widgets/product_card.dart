@@ -10,13 +10,20 @@ class ProductCard extends StatelessWidget {
   const ProductCard({super.key, required this.product});
 
   void _showEditModal(BuildContext context) {
+    print('ProductCard: Abriendo modal de edición para producto ${product.id}');
+    final cubit = context.read<InventoryCubit>();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => ProductFormModal(product: product),
+      builder: (context) => MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: cubit),
+        ],
+        child: ProductFormModal(product: product),
+      ),
     );
   }
 

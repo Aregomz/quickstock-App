@@ -56,17 +56,25 @@ Future<void> createProduct(ProductModel product, String token) async {
 
 
   Future<void> updateProduct(ProductModel product, String token) async {
+    final url = Uri.parse('$baseUrl/api/productos/${product.id}');
+    final payload = product.toJson();
+    print('UpdateProduct: URL: $url');
+    print('UpdateProduct: Token: $token');
+    print('UpdateProduct: Payload: $payload');
+
     final response = await client.put(
-      Uri.parse('$baseUrl/api/productos/${product.id}'),
+      url,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode(product.toJson()),
+      body: jsonEncode(payload),
     );
 
+    print('Respuesta de actualización: ${response.statusCode} - ${response.body}');
+
     if (response.statusCode != 200) {
-      throw Exception('Error al actualizar el producto');
+      throw Exception('Error al actualizar el producto: ${response.statusCode} - ${response.body}');
     }
   }
 

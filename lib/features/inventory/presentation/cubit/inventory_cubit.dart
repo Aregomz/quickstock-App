@@ -53,8 +53,10 @@ class InventoryCubit extends Cubit<InventoryState> {
       await updateProduct(product);
       emit(InventorySuccess('Producto actualizado'));
       await fetchProducts();
-    } catch (e) {
-      emit(InventoryError('Error al actualizar producto'));
+    } catch (e, stacktrace) {
+      print('Error en editProduct: $e');
+      print(stacktrace);
+      emit(InventoryError('Error al actualizar producto: $e'));
     }
   }
 
