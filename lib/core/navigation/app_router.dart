@@ -6,6 +6,8 @@ import 'package:quickstock_app/core/constants/routes.dart';
 import 'package:quickstock_app/features/auth/presentation/pages/login_page.dart';
 import 'package:quickstock_app/features/auth/presentation/pages/register_page.dart';
 import 'package:quickstock_app/features/inventory/presentation/pages/inventory_page.dart';
+import 'package:quickstock_app/features/inventory/presentation/pages/add_product_page.dart';
+import 'package:quickstock_app/features/dashboard/presentation/pages/dashboard_page.dart';
 
 import 'package:quickstock_app/features/inventory/data/datasources/inventory_remote_data_source.dart';
 import 'package:quickstock_app/features/inventory/data/repositories/inventory_repository_impl.dart';
@@ -16,6 +18,7 @@ import 'package:quickstock_app/features/inventory/domain/usecases/update_product
 import 'package:quickstock_app/features/inventory/domain/usecases/delete_product.dart';
 
 import 'package:quickstock_app/features/inventory/presentation/cubit/inventory_cubit.dart';
+import 'package:quickstock_app/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -26,11 +29,16 @@ class AppRouter {
       case Routes.register:
         return MaterialPageRoute(builder: (_) => const RegisterPage());
 
+      case Routes.dashboard:
       case Routes.inventory:
+      case Routes.addProduct:
         final token = settings.arguments as String?;
+        print('AppRouter - Ruta: ${settings.name}, Token recibido: $token');
+        
         if (token == null || token.isEmpty) {
+          print('AppRouter - Token inválido o no proporcionado');
           return MaterialPageRoute(
-            builder: (_) => Scaffold(
+            builder: (_) => const Scaffold(
               body: Center(child: Text('Token inválido o no proporcionado')),
             ),
           );
@@ -45,19 +53,45 @@ class AppRouter {
         final updateProductUseCase = UpdateProductUseCase(inventoryRepository);
         final deleteProductUseCase = DeleteProductUseCase(inventoryRepository);
 
-        return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => InventoryCubit(
-              getAllProducts: getAllProductsUseCase,
-              createProduct: createProductUseCase,
-              updateProduct: updateProductUseCase,
-              deleteProduct: deleteProductUseCase,
-            ),
-            child: const InventoryPage(),
-          ),
+        final inventoryCubit = InventoryCubit(
+          getAllProductsUseCase: getAllProductsUseCase,
+          createProduct: createProductUseCase,
+          updateProduct: updateProductUseCase,
+          deleteProductUseCase: deleteProductUseCase,
         );
 
+        final dashboardCubit = DashboardCubit(
+          getAllProducts: getAllProductsUseCase,
+        );
 
+        if (settings.name == Routes.dashboard) {
+          return MaterialPageRoute(
+            builder: (_) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: inventoryCubit),
+                BlocProvider.value(value: dashboardCubit),
+              ],
+              child: DashboardPage(token: token),
+            ),
+          );
+        }
+
+        if (settings.name == Routes.addProduct) {
+          print('AppRouter - Creando ruta AddProduct con token: $token');
+          return MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: inventoryCubit,
+              child: const AddProductPage(),
+            ),
+          );
+        }
+
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: inventoryCubit,
+            child: InventoryPage(token: token),
+          ),
+        );
 
       default:
         return MaterialPageRoute(

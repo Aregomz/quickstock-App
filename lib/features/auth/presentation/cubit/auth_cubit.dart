@@ -13,11 +13,14 @@ class AuthCubit extends Cubit<AuthState> {
   }) : super(AuthInitial());
 
   Future<void> login(String email, String password) async {
+    print('AuthCubit - Iniciando login con email: $email');
     emit(AuthLoading());
     try {
       final user = await loginUseCase(email, password);
+      print('AuthCubit - Login exitoso, token recibido: ${user.token}');
       emit(AuthSuccess(token: user.token));
     } catch (e) {
+      print('AuthCubit - Error en login: $e');
       emit(AuthFailure(error: e.toString()));
     }
   }

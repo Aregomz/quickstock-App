@@ -20,6 +20,8 @@ class _LoginPageState extends State<LoginPage> {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
+    print('LoginPage - Intentando login con email: $email');
+
     if (email.isNotEmpty && password.isNotEmpty) {
       context.read<AuthCubit>().login(email, password);
     } else {
@@ -37,41 +39,70 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsets.all(16.0),
         child: BlocConsumer<AuthCubit, AuthState>(
           listener: (context, state) {
+            print('LoginPage - Estado actual: $state');
+            
             if (state is AuthSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Inicio de sesión exitoso")),
-              );
-              // ✅ Navegación limpia usando rutas centralizadas
-              Navigator.of(context).pushReplacementNamed(
-                '/inventory',
-                arguments: state.token,  // Pasamos el token
-              );
-
+              print('LoginPage - Token obtenido después del login: ${state.token}');
+              if (state.token.isNotEmpty) {
+                print('LoginPage - Navegando al dashboard con token: ${state.token}');
+                Navigator.of(context).pushReplacementNamed(
+                  Routes.dashboard,
+                  arguments: state.token,
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Inicio de sesión exitoso")),
+                );
+              } else {
+                print('LoginPage - Token vacío recibido');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Error: Token vacío"),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             } else if (state is AuthFailure) {
+              print('LoginPage - Error de autenticación: ${state.error}');
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.error)),
+                SnackBar(
+                  content: Text(state.error),
+                  backgroundColor: Colors.red,
+                ),
               );
             }
           },
           builder: (context, state) {
             return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextField(
                   controller: emailController,
-                  decoration: const InputDecoration(labelText: 'Correo'),
+                  decoration: const InputDecoration(
+                    labelText: 'Correo',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
                 ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: passwordController,
-                  decoration: const InputDecoration(labelText: 'Contraseña'),
+                  decoration: const InputDecoration(
+                    labelText: 'Contraseña',
+                    border: OutlineInputBorder(),
+                  ),
                   obscureText: true,
                 ),
-                const SizedBox(height: 20),
-                state is AuthLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: () => _login(context),
-                        child: const Text('Iniciar sesión'),
-                      ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: state is AuthLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : ElevatedButton(
+                          onPressed: () => _login(context),
+                          child: const Text('Iniciar sesión'),
+                        ),
+                ),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {

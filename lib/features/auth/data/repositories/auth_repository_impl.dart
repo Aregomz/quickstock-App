@@ -9,7 +9,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<User> login(String email, String password) async {
+    print('AuthRepositoryImpl - Iniciando login');
     final token = await remoteDataSource.login(email, password);
+    print('AuthRepositoryImpl - Token recibido del datasource: $token');
     return User(token: token);
   }
 
