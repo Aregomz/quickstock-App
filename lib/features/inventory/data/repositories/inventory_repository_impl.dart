@@ -31,6 +31,8 @@ Future<void> updateProduct(Product product) {
 
   @override
   Future<void> deleteProduct(int id) {
+    print('InventoryRepositoryImpl - Eliminando producto con ID: $id');
+    print('InventoryRepositoryImpl - Token: $token');
     return remoteDataSource.deleteProduct(id, token);
   }
 }

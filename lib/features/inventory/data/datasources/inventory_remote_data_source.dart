@@ -79,15 +79,24 @@ Future<void> createProduct(ProductModel product, String token) async {
   }
 
   Future<void> deleteProduct(int id, String token) async {
+    print('DeleteProduct: Intentando eliminar producto con ID: $id');
+    print('DeleteProduct: Token: $token');
+    
+    final url = Uri.parse('$baseUrl/api/productos/$id');
+    print('DeleteProduct: URL: $url');
+    
     final response = await client.delete(
-      Uri.parse('$baseUrl/api/productos/$id'),
+      url,
       headers: {
         'Authorization': 'Bearer $token',
       },
     );
 
+    print('DeleteProduct: Respuesta del servidor - Status: ${response.statusCode}');
+    print('DeleteProduct: Respuesta del servidor - Body: ${response.body}');
+
     if (response.statusCode != 200) {
-      throw Exception('Error al eliminar el producto');
+      throw Exception('Error al eliminar el producto: ${response.statusCode} - ${response.body}');
     }
   }
 }

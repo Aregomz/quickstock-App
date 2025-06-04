@@ -56,9 +56,12 @@ class InventoryCubit extends Cubit<InventoryState> {
   }
 
   Future<void> deleteProduct(int id) async {
+    print('InventoryCubit - Iniciando eliminación de producto con ID: $id');
+    emit(InventoryLoading());
     try {
       await deleteProductUseCase(id);
-      emit(InventorySuccess('Producto eliminado'));
+      print('InventoryCubit - Producto eliminado exitosamente');
+      emit(InventorySuccess('Producto eliminado exitosamente'));
       await getAllProducts();
     } catch (e) {
       print('InventoryCubit - Error al eliminar producto: $e');

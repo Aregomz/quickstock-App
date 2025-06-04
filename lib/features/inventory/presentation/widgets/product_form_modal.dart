@@ -15,7 +15,6 @@ class ProductFormModal extends StatefulWidget {
 
 class _ProductFormModalState extends State<ProductFormModal> {
   final _formKey = GlobalKey<FormState>();
-
   late TextEditingController _nameController;
   late TextEditingController _categoryController;
   late TextEditingController _priceController;
@@ -33,105 +32,176 @@ class _ProductFormModalState extends State<ProductFormModal> {
     _descriptionController = TextEditingController(text: p?.description ?? '');
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _categoryController.dispose();
+    _priceController.dispose();
+    _stockController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  String? _validateField(String? value, String fieldName) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, ingresa $fieldName';
+    }
+    return null;
+  }
+
+  String? _validateNumber(String? value, String fieldName) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, ingresa $fieldName';
+    }
+    if (double.tryParse(value) == null) {
+      return 'Por favor, ingresa un número válido';
+    }
+    return null;
+  }
+
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      print('ProductFormModal: Iniciando edición/creación de producto');
-      final newProduct = Product(
+      final product = Product(
         id: widget.product?.id ?? 0,
         name: _nameController.text.trim(),
         category: _categoryController.text.trim(),
-        price: double.tryParse(_priceController.text.trim()) ?? 0.0,
-        stock: int.tryParse(_stockController.text.trim()) ?? 0,
+        price: double.parse(_priceController.text.trim()),
+        stock: int.parse(_stockController.text.trim()),
         description: _descriptionController.text.trim(),
       );
 
-      print('ProductFormModal: Producto a enviar: ${newProduct.id}, ${newProduct.name}, ${newProduct.category}');
       final cubit = context.read<InventoryCubit>();
-
       if (widget.product == null) {
-        print('ProductFormModal: Creando nuevo producto');
-        cubit.addProduct(newProduct);
+        cubit.addProduct(product);
       } else {
-        print('ProductFormModal: Editando producto existente');
-        cubit.editProduct(newProduct);
+        cubit.editProduct(product);
       }
     }
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    String? hint,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          border: const OutlineInputBorder(),
+        ),
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        validator: validator ?? (value) => _validateField(value, label),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.product != null;
-    print('ProductFormModal: Construyendo formulario. isEditing: $isEditing');
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 40),
-      child: BlocConsumer<InventoryCubit, InventoryState>(
-        listener: (context, state) {
-          print('ProductFormModal: Estado recibido: $state');
-          if (state is InventorySuccess) {
-            print('ProductFormModal: Operación exitosa');
-            Navigator.of(context).pop(); // cerrar el modal
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          } else if (state is InventoryError) {
-            print('ProductFormModal: Error recibido: ${state.message}');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          return SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isEditing ? 'Editar Producto' : 'Nuevo Producto',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 12),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      _buildTextField(_nameController, 'Nombre', true),
-                      _buildTextField(_categoryController, 'Categoría', true),
-                      _buildTextField(_priceController, 'Precio', true, inputType: TextInputType.number),
-                      _buildTextField(_stockController, 'Stock', true, inputType: TextInputType.number),
-                      _buildTextField(_descriptionController, 'Descripción', false),
-                      const SizedBox(height: 20),
-                      if (state is InventoryLoading)
-                        const CircularProgressIndicator()
-                      else
-                        ElevatedButton(
-                          onPressed: _submit,
-                          child: Text(isEditing ? 'Guardar cambios' : 'Crear producto'),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        top: 16,
+        left: 16,
+        right: 16,
       ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label, bool required, {TextInputType inputType = TextInputType.text}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: inputType,
-        decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-        validator: required
-            ? (value) => (value == null || value.trim().isEmpty) ? 'Este campo es obligatorio' : null
-            : null,
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                isEditing ? 'Editar Producto' : 'Nuevo Producto',
+                style: Theme.of(context).textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _nameController,
+                label: 'Nombre',
+                hint: 'Ingresa el nombre del producto',
+              ),
+              _buildTextField(
+                controller: _categoryController,
+                label: 'Categoría',
+                hint: 'Ingresa la categoría',
+              ),
+              _buildTextField(
+                controller: _priceController,
+                label: 'Precio',
+                hint: 'Ingresa el precio',
+                keyboardType: TextInputType.number,
+                validator: (value) => _validateNumber(value, 'el precio'),
+              ),
+              _buildTextField(
+                controller: _stockController,
+                label: 'Stock',
+                hint: 'Ingresa la cantidad en stock',
+                keyboardType: TextInputType.number,
+                validator: (value) => _validateNumber(value, 'el stock'),
+              ),
+              _buildTextField(
+                controller: _descriptionController,
+                label: 'Descripción',
+                hint: 'Ingresa una descripción del producto',
+                maxLines: 3,
+              ),
+              BlocConsumer<InventoryCubit, InventoryState>(
+                listener: (context, state) {
+                  if (state is InventorySuccess) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(state.message)),
+                    );
+                  } else if (state is InventoryError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancelar'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: state is InventoryLoading ? null : _submit,
+                          child: state is InventoryLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Text(isEditing ? 'Guardar' : 'Crear'),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

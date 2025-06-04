@@ -4,6 +4,7 @@ import 'package:quickstock_app/core/constants/routes.dart';
 import 'package:quickstock_app/features/inventory/domain/entities/product.dart';
 import 'package:quickstock_app/features/inventory/presentation/cubit/inventory_cubit.dart';
 import 'package:quickstock_app/features/inventory/presentation/cubit/inventory_state.dart';
+import 'package:quickstock_app/features/inventory/presentation/widgets/product_form_modal.dart';
 
 class InventoryPage extends StatefulWidget {
   final String token;
@@ -221,31 +222,40 @@ class _InventoryPageState extends State<InventoryPage> {
                                                 IconButton(
                                                   icon: const Icon(Icons.edit),
                                                   onPressed: () {
-                                                    // TODO: Implementar edición
+                                                    final cubit = context.read<InventoryCubit>();
+                                                    showModalBottomSheet(
+                                                      context: context,
+                                                      isScrollControlled: true,
+                                                      builder: (context) => BlocProvider.value(
+                                                        value: cubit,
+                                                        child: ProductFormModal(
+                                                          product: product,
+                                                        ),
+                                                      ),
+                                                    );
                                                   },
                                                 ),
                                                 IconButton(
                                                   icon: const Icon(Icons.delete),
                                                   color: Colors.red,
                                                   onPressed: () {
+                                                    final cubit = context.read<InventoryCubit>();
                                                     showDialog(
                                                       context: context,
-                                                      builder: (context) => AlertDialog(
+                                                      builder: (dialogContext) => AlertDialog(
                                                         title: const Text('Eliminar producto'),
                                                         content: const Text(
                                                             '¿Estás seguro de que deseas eliminar este producto?'),
                                                         actions: [
                                                           TextButton(
                                                             onPressed: () =>
-                                                                Navigator.of(context).pop(),
+                                                                Navigator.of(dialogContext).pop(),
                                                             child: const Text('Cancelar'),
                                                           ),
                                                           TextButton(
                                                             onPressed: () {
-                                                              Navigator.of(context).pop();
-                                                              context
-                                                                  .read<InventoryCubit>()
-                                                                  .deleteProduct(product.id);
+                                                              Navigator.of(dialogContext).pop();
+                                                              cubit.deleteProduct(product.id);
                                                             },
                                                             child: const Text(
                                                               'Eliminar',
